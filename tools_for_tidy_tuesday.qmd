@@ -1,0 +1,175 @@
+---
+title: "Tools to get started for TidyTuesday"
+format: html
+editor: visual
+---
+
+**Description:** This document shows some examples of functions that can be very useful when cleaning and visualization data. 
+
+
+**1. Packages and data!**
+
+First let's install the packages we need; and then load it so we can use it!
+
+```{r}
+install.packages('tidyverse')
+library(tidyverse)
+```
+
+The {tidyverse} is a wrapper containing many packages. These include {dplyr} and {ggplot2} which we will use today, but also packages like {lubridate} (which helps when you are working with date and time data), {janitor} (useful for cleaning up data), and many more! Even though I use the {tidyverse} to load in all the packages, I like to know which package the functions I use come from.
+
+The data we will be using today is from the [Tidy Tuesday repository](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-10-22), Horror Movie Rankings!
+
+You can either download it straight from GitHub or from this repository.
+
+```{r}
+#horror_movies <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-10-22/horror_movies.csv")
+horror_movies <- readr::read_csv("data/horror_movies.csv")
+```
+
+**2. Data Exploration**
+
+One of the first things you want to do is explore the data a bit. Things that are useful to know are, what are the contents of each column, are they numerical or characters based, what is the spread of the data like, etc. 
+
+
+The first thing I usually do is look into each column - starting with what the heck they're called!
+
+```{r}
+colnames(horror_movies)
+```
+
+This looks nice and clean. Sometimes if you are working with raw data, the naming scheme will be less consistent and you will need to do some "cleaning". The {janitor} package is especially helpful with this.
+
+If you're interested in the class or type of data that each column is you can use the class function, and specify which column within the dataframe you are interested in. 
+```{r}
+class(horror_movies$title)
+class(horror_movies$review_rating)
+```
+Let's look into this column a bit more with the function unique(). This will tell you all of the distinct variables in each column, or you can specify a column.
+
+```{r}
+unique(horror_movies$review_rating)
+```
+
+That's a little hard to read... let's just get some stats on this.
+```{r}
+mean(horror_movies$review_rating)
+## this is NA because there is an NA value in the data. To calcualte the mean without the NA value do this:
+mean(horror_movies$review_rating, na.rm = TRUE)
+range(horror_movies$review_rating, na.rm = TRUE)
+```
+We can also make some basic exploratory plots.
+```{r}
+hist(horror_movies$review_rating)
+```
+
+**2. Manipulating the data**
+
+Sometimes you will need to manipulate the data a little bit to create a data set with the necessary data you want for your plot or to create a new column.
+
+Let's choose the data columns that we want to work with.
+```{r}
+movies <- horror_movies %>% 
+  dplyr::select(title, genres, review_rating, language)
+```
+
+I'm only interested in movies in English, let's filter out other languages
+```{r}
+movies_english <- movies %>% 
+  filter(language == "English")
+```
+
+We can also remove any data that has an NA for review_rating
+```{r}
+movies_english <- movies_english %>% 
+  filter(!is.na(review_rating))
+```
+
+We've done a couple of things to our new data set, let's just look at it real quick and check in.
+```{r}
+movies_english
+```
+
+There are a bunch of movies that are not just listed as "Horror" in the genre department. I want to create a new column where it says where or not there are multiple genres listed or only "Horror". We can create a new column based off of another column in the data set. To do this we will use two functions we haven't seen before: mutate() an case_when(). mutate() creates a new column and case_when() gives information on what to call that column based off of other information. We can nest these together.
+```{r}
+movies_english_genre <- movies_english %>% 
+  mutate(multiple_genre = case_when(genres == "Horror" ~ "no",
+                                    T ~ "yes"))
+```
+
+**3. Plotting Data**
+
+We will be using {ggplot2} - the grammar of graphics -  for making plots today. To make a plot there is a simple "formula" that you have to adhere to each time but then you can add and make as many changes to your plot on top of that as you would like!
+
+      ggplot(data) +
+      geom_function(mapping = aes(x = x_value,
+                                  y = y_value)
+                                  
+There are many 'geom_function's available to you. For purposes today you can just think of them as specifying what type of plot you want to make, but it can get more complex with stats visualized on a plot and such.
+
+Let's just make a simple scatter plot.
+
+```{r}
+ggplot(movies_english_genre) +
+  geom_point(mapping = aes(x = review_rating,
+                           y = multiple_genre))
+```
+ 
+Hmmmm, that doesn't look very helpful! Let's try a barplot instead
+ 
+```{r}
+ggplot(movies_english_genre) +
+  geom_bar(mapping = aes(x = review_rating)) 
+```
+ Kinda boring, what does it look like if we separate our multiple genres?
+ 
+```{r}
+ggplot(movies_english_genre) +
+  geom_bar(mapping = aes(x = review_rating, 
+                         fill = multiple_genre)) 
+```
+ 
+It's a little hard to read stacked like that, I think I want it side by side instead.
+
+```{r}
+ggplot(movies_english_genre) +
+  geom_bar(mapping = aes(x = review_rating, 
+                         fill = multiple_genre),
+           position = "dodge") 
+```
+
+I want the background to be prettier! To do that we can play with themes. There are a bunch of options in {ggplot2} or you can install packages that have even more themes for plots!
+
+```{r}
+ggplot(movies_english_genre) +
+  geom_bar(mapping = aes(x = review_rating, 
+                         fill = multiple_genre),
+           position = "dodge") +
+  theme_minimal()
+```
+
+Okay to finish it off let's add a title and better looking axis titles.
+
+```{r}
+my_plot <- ggplot(movies_english_genre) +
+  geom_bar(mapping = aes(x = review_rating, 
+                         fill = multiple_genre),
+           position = "dodge") +
+  theme_minimal() +
+  labs(title = "Does a horror movie need to be more than pure horror?",
+       x = "Review Rating",
+       y = "Count")
+```
+
+We are going to stop there, but there is so much more we could do! Choose the colors, change the legend title, make the bins smaller, etc but I think it's time for you all to have some fun and make some plots!
+
+The last thing we will go over is how to save your plots so that you can use them in presenations, reports, or to show off to your friends and family.
+
+**4. Save it!**
+
+```{r}
+ggsave(plot = my_plot, "outputs/juliette_horror_plot.png")
+```
+
+
+
