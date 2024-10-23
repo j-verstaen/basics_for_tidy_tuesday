@@ -163,7 +163,7 @@ my_plot <- ggplot(movies_english_genre) +
 
 We are going to stop there, but there is so much more we could do! Choose the colors, change the legend title, make the bins smaller, etc but I think it's time for you all to have some fun and make some plots!
 
-The last thing we will go over is how to save your plots so that you can use them in presenations, reports, or to show off to your friends and family.
+The last thing we will go over is how to save your plots so that you can use them in presentations, reports, or to show off to your friends and family.
 
 **4. Save it!**
 
